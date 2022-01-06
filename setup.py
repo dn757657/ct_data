@@ -1,8 +1,8 @@
 from distutils.core import setup
 
-setup(name='caretaker_fdata',
+setup(name='ct_data',
       version='1.0',
-      packages=['src'],
+      packages=['ct_data'],
       # Start with a small number and increase it with every change you make
       license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
       description = 'finance management tool',   # Give a short description about your library
