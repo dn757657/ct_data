@@ -196,26 +196,25 @@ class FinanceDB:
 
         return
 
-    def create_budgets(self,):
-        budgets = """ CREATE TABLE IF NOT EXISTS budgets (
-                        b_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        b_resolution TEXT NOT NULL CHECK(b_resolution IN ('month','day')),
-                        b_target REAL NOT NULL,
+    def create_displays(self,):
+        displays = """ CREATE TABLE IF NOT EXISTS displays (
+                        di_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        di_target REAL NOT NULL,
                         disp_start TEXT,
-                        disp_resolution REAL TEXT CHECK(disp_resolution IN ('month', 'week', 'day')),
+                        disp_resolution REAL TEXT CHECK(disp_resolution IN ('year', 'month', 'week', 'day')),
                         disp_end TEXT,
                         disp_window_size INTEGER,
-                        disp_window_unit TEXT CHECK(disp_window_unit IN ('month', 'week', 'day')),
+                        disp_window_unit TEXT CHECK(disp_window_unit IN ('year', 'month', 'week', 'day')),
                         disp_type TEXT NOT NULL,
                         graph_type TEXT NOT NULL,
                         proj_type TEXT,
-                        b_cat INTEGER NOT NULL,
-                        FOREIGN KEY (b_cat) REFERENCES categories (cat_id) ON DELETE CASCADE ON UPDATE CASCADE
+                        di_cat INTEGER NOT NULL,
+                        FOREIGN KEY (di_cat) REFERENCES categories (cat_id) ON DELETE CASCADE ON UPDATE CASCADE
     
                         ); """
 
-        if 'budgets' not in self.schema.keys():
-            self.conn.cursor().execute(budgets)
+        if 'displays' not in self.schema.keys():
+            self.conn.cursor().execute(displays)
             print("Created budgets table")
 
         # update schema!
@@ -237,13 +236,13 @@ class FinanceDB:
         # update schema!
         self.schema = self._get_accounts()
 
-    def create_budgets_dashboards(self,):
-        budgets_dashboards = """ CREATE TABLE IF NOT EXISTS budgets_dashboardss (
-                                    b_id INTEGER,
+    def create_displays_dashboards(self,):
+        budgets_dashboards = """ CREATE TABLE IF NOT EXISTS displays_dashboardss (
+                                    di_id INTEGER,
                                     dash_id INTEGER,
                                     disp_type TEXT NOT NULL,
-                                    UNIQUE(b_id, dash_id)
-                                    FOREIGN KEY (b_id) REFERENCES budgets (b_id) ON DELETE CASCADE ON UPDATE CASCADE,
+                                    UNIQUE(di_id, dash_id)
+                                    FOREIGN KEY (di_id) REFERENCES displays (di_id) ON DELETE CASCADE ON UPDATE CASCADE,
                                     FOREIGN KEY (dash_id) REFERENCES dashboards (dash_id) ON DELETE CASCADE ON UPDATE CASCADE
             
                                 ); """
@@ -660,7 +659,20 @@ class Query:
 
         return updates_str
 
-    def build_select(self, function=None):
+    def _query_dict(self, query, table):
+        entries = []
+        data = db.conn.cursor().execute(query).fetchall()
+        keys = db.schema[table]
+
+        for entry in data:
+            query_dict = {}
+            for i in range(0, len(entry)):
+                query_dict[keys[i]] = entry[i]
+            entries.append(query_dict)
+
+        return entries
+
+    def build_select(self, build_op='string', function=None):
         # SELECT s_cols FROM table WHERE ORDER LIMIT
         # SELECT function(s_cols) FROM table WHERE ORDER LIMIT
 
@@ -695,7 +707,11 @@ class Query:
             query = query + self.limit_str
 
         print(query)
-        return query
+        if build_op == 'string':
+            return query
+        elif build_op == 'dict':
+            data = self._query_dict(query=query, table=self.table)
+            return data
 
     def build_insert(self, method='FAIL',):
         # INSERT OR method INTO table (columns,) VALUES (values,)
