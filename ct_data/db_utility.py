@@ -3,12 +3,17 @@ import pathlib
 import pandas as pd
 import copy
 import os
+import data_db
+import display_db
 
 fipy_fp = pathlib.Path(__file__).absolute().parent
 os.makedirs(fipy_fp.joinpath('db'), exist_ok=True)
 
+# TODO store all input validation informaiton in db, such as available options for various inputs
+# TODO similarly store all process flows in db, such as which items must proceed another for feature to function
 
-class FinanceDB:
+
+class DB:
     """    Object for interacting with the finance database object
 
     Attributes:
@@ -20,10 +25,13 @@ class FinanceDB:
 
     """
 
-    def __init__(self):
+    def __init__(self, db_type):
         """ create database object and populate schema data"""
         # connect to db when initialized and establish cursor for later use
-        self.filename = "CTFinance.db"
+        if db_type == 'finance':
+            self.filename = "ct_data.db"
+        elif db_type == 'display':
+            self.filename = "ct_display.db"
         self.filepath = fipy_fp.joinpath("db")
 
         # must enforce foreign keys when connection is formed
@@ -34,7 +42,7 @@ class FinanceDB:
         self.schema = dict()
         self.schema = self._get_accounts()
 
-    def refresh_conn(self):
+    def _refresh_conn(self):
         self.conn.close()
         self.conn = sqlite3.connect(self.filepath.joinpath(self.filename))
         self.conn.cursor().execute('PRAGMA foreign_keys = 1')
@@ -135,274 +143,19 @@ class FinanceDB:
         else:
             print("Method must be either 'inside' or 'outside")
 
-    def create_transactions(self,):
-
-        # transactions has foreign keys linking to categories and accounts
-        self.create_categories()
-        self.create_accounts()
-
-        transactions = """ CREATE TABLE IF NOT EXISTS transactions (
-                            trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            date TEXT NOT NULL,
-                            desc TEXT NOT NULL,
-                            amount REAL NOT NULL,
-                            total_id REAL NOT NULL,
-                            
-                            processed INTEGER CHECK(processed IN (0,1)) DEFAULT(0),
-                            
-                            cat_id INTEGER DEFAULT NULL,
-                            acc_id INTEGER,
-                            FOREIGN KEY (cat_id) REFERENCES categories (cat_id) ON DELETE SET NULL ON UPDATE CASCADE,
-                            FOREIGN KEY (acc_id) REFERENCES accounts (acc_id) ON DELETE CASCADE ON UPDATE CASCADE
-                            
-                        ); """
-
-        # create slits to store originals of split transactions so they arent replicated in updates
-        splits = """ CREATE TABLE IF NOT EXISTS splits (
-                            trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            date TEXT NOT NULL,
-                            desc TEXT NOT NULL,
-                            amount REAL NOT NULL,
-                            total_id REAL NOT NULL
-                            
-                        ); """
-
-        if 'transactions' not in self.schema.keys():
-            self.conn.cursor().execute(transactions)
-            print("Created transactions table")
-
-        if 'splits' not in self.schema.keys():
-            self.conn.cursor().execute(splits)
-            print("Created splits table")
-
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_categories(self,):
-        categories = """ CREATE TABLE IF NOT EXISTS categories (
-                            cat_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            cat_desc TEXT NOT NULL
-    
-                        ); """
-
-        if 'categories' not in self.schema.keys():
-            self.conn.cursor().execute(categories)
-            print("Created categories table")
-
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_displays(self,):
-        displays = """ CREATE TABLE IF NOT EXISTS displays (
-                        di_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        di_target REAL NOT NULL,
-                        disp_start TEXT,
-                        disp_resolution REAL TEXT CHECK(disp_resolution IN ('year', 'month', 'week', 'day')),
-                        disp_end TEXT,
-                        disp_window_size INTEGER,
-                        disp_window_unit TEXT CHECK(disp_window_unit IN ('year', 'month', 'week', 'day')),
-                        disp_type TEXT NOT NULL,
-                        graph_type TEXT NOT NULL,
-                        proj_type TEXT,
-                        di_cat INTEGER NOT NULL,
-                        FOREIGN KEY (di_cat) REFERENCES categories (cat_id) ON DELETE CASCADE ON UPDATE CASCADE
-    
-                        ); """
-
-        if 'displays' not in self.schema.keys():
-            self.conn.cursor().execute(displays)
-            print("Created budgets table")
-
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_dashboards(self,):
-        dashboards = """ CREATE TABLE IF NOT EXISTS dashboards (
-                                    dash_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    dash_desc TEXT NOT NULL,
-                                    dash_date DATETIME DEFAULT CURRENT_TIMESTAMP
-            
-                                ); """
-
-        if 'dashboards' not in self.schema.keys():
-            self.conn.cursor().execute(dashboards)
-            print("Created dashboards table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-    def create_displays_dashboards(self,):
-        budgets_dashboards = """ CREATE TABLE IF NOT EXISTS displays_dashboardss (
-                                    di_id INTEGER,
-                                    dash_id INTEGER,
-                                    disp_type TEXT NOT NULL,
-                                    UNIQUE(di_id, dash_id)
-                                    FOREIGN KEY (di_id) REFERENCES displays (di_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                                    FOREIGN KEY (dash_id) REFERENCES dashboards (dash_id) ON DELETE CASCADE ON UPDATE CASCADE
-            
-                                ); """
-
-        if 'budgets_dashboards' not in self.schema.keys():
-            self.conn.cursor().execute(budgets_dashboards)
-            print("Created budgets_dashboards link table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-    def create_accounts(self,):
-        accounts = """ CREATE TABLE IF NOT EXISTS accounts (
-                            acc_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            num INTEGER NOT NULL UNIQUE,
-                            institution TEXT,
-                            desc TEXT,
-                            filepath TEXT NOT NULL,
-                            source TEXT CHECK(source IN ('file', 'api')),
-                            adjust REAL
-    
-                        ); """
-
-        if 'accounts' not in self.schema.keys():
-            self.conn.cursor().execute(accounts)
-            print("Created accounts table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_crypto(self,):
-        crypto = """ CREATE TABLE IF NOT EXISTS crypto (
-                        cr_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        desc TEXT NOT NULL,
-                        qty REAL NOT NULL,
-                        price REAL NOT NULL,
-                        total REAL NOT NULL
-                        
-                    ); """
-
-        if 'crypto' not in self.schema.keys():
-            self.conn.cursor().execute(crypto)
-            print("Created crypto table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_crypto_holdings(self,):
-        crypto_holdings = """ CREATE TABLE IF NOT EXISTS crypto_holdings (
-                        crh_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        desc TEXT NOT NULL,
-                        symbol TEXT NOT NULL,
-                        parent_chain TEXT,
-                        chain_address TEXT
-                        
-                    ); """
-
-        if 'crypto_holdings' not in self.schema.keys():
-            self.conn.cursor().execute(crypto_holdings)
-            print("Created crypto_holdings table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_qtrade(self,):
-        qtrade = """ CREATE TABLE IF NOT EXISTS qtrade (
-                        qt_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        symbol TEXT NOT NULL,
-                        symbolId TEXT NOT NULL,
-                        openQuantity INTEGER,
-                        closeQuantity INTEGER,
-                        currentMarketValue REAL NOT NULL,
-                        currentPrice REAL NOT NULL,
-                        averageEntryPrice REAL NOT NULL,
-                        totalCost REAL NOT NULL
-                        
-                    ); """
-
-        if 'qtrade' not in self.schema.keys():
-            self.conn.cursor().execute(qtrade)
-            print("Created qtrade table")
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_tags(self,):
-        self.create_transactions()
-        tags = """ CREATE TABLE IF NOT EXISTS tags (
-                            tag_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            desc TEXT NOT NULL UNIQUE
-    
-                        ); """
-
-        tags_links = """ CREATE TABLE IF NOT EXISTS tags_links (
-                            trans_id INTEGER,
-                            tag_id INTEGER,
-                            UNIQUE(trans_id, tag_id)
-                            FOREIGN KEY (trans_id) REFERENCES transactions (trans_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                            FOREIGN KEY (tag_id) REFERENCES tags (tag_id) ON DELETE CASCADE ON UPDATE CASCADE
-    
-                        ); """
-
-        if 'tags' not in self.schema.keys():
-            self.conn.cursor().execute(tags)
-            self.conn.cursor().execute(tags_links)
-            print("Created tags table")
-
-        # update schema!
-        self.schema = self._get_accounts()
-
-        return
-
-    def create_table(self, name):
+    def update_tables(self, db_type):
         """ create default tables used in finance app using default schema set internally
         Args:
         name:   name of table to create(transactions, accounts, categories)
 
         """
+        if db_type == 'finance':
+            for table_command in data_db.FINANCE_TABLES:
+                self.conn.cursor().execute(table_command)
 
-        if name not in self.schema.keys():
-            if name == 'transactions':
-                self.create_transactions()
-
-            elif name == 'categories':
-                self.create_categories()
-
-            elif name == 'accounts':
-                self.create_accounts()
-
-            elif name == 'tags':
-                self.create_tags()
-
-            elif name == 'crypto':
-                self.create_crypto()
-
-            elif name == 'crypto_holdings':
-                self.create_crypto_holdings()
-
-            elif name == 'qtrade':
-                self.create_qtrade()
-
-            elif name == 'budgets':
-                self.create_budgets()
-                self.create_dashboards()
-                self.create_budgets_dashboards()
-
-            elif name == 'dashboards':
-                self.create_budgets()
-                self.create_dashboards()
-                self.create_budgets_dashboards()
-
-            else:
-                pass
-        else:
-            pass
+        if db_type == 'display':
+            for table_command in display_db.DISPLAY_TABLES:
+                self.conn.cursor().execute(table_command)
 
         return
 
@@ -414,7 +167,7 @@ class FinanceDB:
             return False
 
 
-db = FinanceDB()
+db = DB()
 
 
 class Query:
@@ -600,8 +353,6 @@ class Query:
         else:
             val_str = param[0]
 
-
-
         return val_str
 
     def _queryize_where(self):
@@ -660,6 +411,8 @@ class Query:
         return updates_str
 
     def _query_dict(self, query, table):
+        """ return list of dictionaries, table column names as keys and entries as items """
+
         entries = []
         data = db.conn.cursor().execute(query).fetchall()
         keys = db.schema[table]
@@ -671,6 +424,18 @@ class Query:
             entries.append(query_dict)
 
         return entries
+
+    def links_entries(self, item_id, item_col, link_table):
+        """ return linked items in link table given one ID and link table as list of ID's """
+
+        links_raw = db.conn.cursor().execute(
+            "SELECT * FROM " + link_table + "WHERE " + item_col + " = " + item_id).fetchall()
+
+        links = []
+        for link in links_raw:
+            links.append(link[0])
+
+        return links
 
     def build_select(self, build_op='string', function=None):
         # SELECT s_cols FROM table WHERE ORDER LIMIT

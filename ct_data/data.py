@@ -9,7 +9,7 @@ import copy
 
 # dans libraries
 import crypto
-import finance_db
+import db_utility
 import questrade_2 as qt
 from classify import BankClassify
 
@@ -96,44 +96,8 @@ def create_holding(query):
     return
 
 
-def create_budget(db, query):
-    # create tags table if none exists
-    if not db.exists('budgets'):
-        db.create_table('budgets')
-
-    db.conn.cursor().execute(query.build_insert())
-
-    # delete duplicates and keep minimum id value (original entry)
-    db.drop_duplicates(table=query.table, condition='MIN', method='inside', filter_columns=query.s_cols)
-    db.conn.commit()
-
-    show_tabulated_sql(db, query)
-
-    print("Created budget successfully")
-
-    return
-
-
-def create_dashboard(db, query):
-    # create tags table if none exists
-    if not db.exists('dashboards'):
-        db.create_table('dashboards')
-
-    db.conn.cursor().execute(query.build_insert())
-
-    # delete duplicates and keep minimum id value (original entry)
-    db.drop_duplicates(table=query.table, condition='MIN', method='inside', filter_columns=query.s_cols)
-    db.conn.commit()
-
-    print("Created dashboard successfully")
-
-    return
-
-
 def create_item(db, query, item_type, drop_cond=None, drop_method=None, comp_columns=None):
-    # create table if none exists to put items in
-    if not db.exists(query.table):
-        db.create_table(query.table)
+    """ pleas write docstring """
 
     if item_type == 'account':
         create_acc(query=query)
@@ -422,7 +386,7 @@ def tag_entry(db, tagged_query, tag_param):
     w_vals = [tag_param, tag_param]
     w_joins = ['OR', None]
 
-    tag_query = finance_db.Query(table=tags_table, in_vals=in_vals,
+    tag_query = db_utility.Query(table=tags_table, in_vals=in_vals,
                                  w_cols=w_cols, w_conds=w_conds, w_vals=w_vals, w_joins=w_joins)
 
     # need full data point to filtered columns and up_vals are cancelled out, only for when update and tag are
@@ -443,7 +407,7 @@ def tag_entry(db, tagged_query, tag_param):
     for transaction in to_tag:
         # tag transaction
         table = 'tags_links'
-        query_tags_transactions = finance_db.Query(table=table, in_cols=db.schema[table],
+        query_tags_transactions = db_utility.Query(table=table, in_cols=db.schema[table],
                                                    in_vals=[str(transaction[0]), tag_id])
         db.conn.cursor().execute(query_tags_transactions.build_insert())
 

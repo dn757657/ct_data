@@ -7,14 +7,14 @@ from textblob.classifiers import NaiveBayesClassifier
 from colorama import init, Fore, Style
 from tabulate import tabulate
 
-import finance_db
+import db_utility
 
 
 class BankClassify:
 
     def __init__(self, data="sql"):
         """Load in the previous data (by default from `data`) and initialise the classifier"""
-        self.db = finance_db.FinanceDB()
+        self.db = db_utility.DB()
 
         # allows dynamic training data to be used (i.e many accounts in a loop)
         self.unprocessed_data = None

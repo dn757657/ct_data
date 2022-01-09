@@ -1,6 +1,6 @@
 from qtrade import Questrade
 import pathlib
-import finance_db
+import db_utility
 
 fipy_fp = pathlib.Path(__file__).absolute().parent.parent
 src_path = fipy_fp.joinpath('src')
@@ -40,8 +40,8 @@ def update_qpositions(db, account_id):
         update_cols = list(update.keys())
         update_vals = list(update.values())
 
-        query = finance_db.Query(table='qtrade',
-                                 in_vals=update_vals, in_cols=update_cols,)
+        query = db_utility.Query(table='qtrade',
+                                 in_vals=update_vals, in_cols=update_cols, )
 
         # query = db.insert(table='qtrade', columns=update_cols, values=update_vals)
         db.conn.cursor().execute(query.build_insert())

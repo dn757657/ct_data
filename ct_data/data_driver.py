@@ -1,5 +1,5 @@
 from docopt import docopt
-import finance_db
+import db_utility
 import data
 import docopt_utility
 import copy
@@ -69,7 +69,7 @@ args = docopt(usage)
 docopt_utility.elim_apostrophes(args=args)
 
 # initialize objects to pass to various function calls
-query = finance_db.Query(table=args['<table>'],
+query = db_utility.Query(table=args['<table>'],
                          s_cols=args['<s_cols>'],
                          in_vals=None, in_cols=None,
                          up_vals=args['<up_vals>'], up_cols=args['<up_cols>'],
@@ -77,7 +77,7 @@ query = finance_db.Query(table=args['<table>'],
                          o_col=args['<o_col>'], o_cond=docopt_utility.o_cond(args),
                          limit=args['<limit>'])
 
-db = finance_db.FinanceDB()
+db = db_utility.DB()
 
 if args['delete']:
     db.conn.cursor().execute(query.build_delete())
