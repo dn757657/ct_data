@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='ct_data',
-      version='1.0',
+      version='0.0.1',
       packages=['ct_data'],
       # Start with a small number and increase it with every change you make
       license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
