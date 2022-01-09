@@ -3,8 +3,8 @@ import pathlib
 import pandas as pd
 import copy
 import os
-import data_db
-import display_db
+import ct_data.data_db as data_db
+import ct_data.display_db as display_db
 
 fipy_fp = pathlib.Path(__file__).absolute().parent
 os.makedirs(fipy_fp.joinpath('db'), exist_ok=True)

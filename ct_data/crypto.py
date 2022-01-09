@@ -2,7 +2,7 @@ from web3 import Web3
 import json
 from decimal import Decimal
 
-import pricing
+import ct_data.pricing as pricing
 
 w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/80de2f7c4deb45d5a880a822f2bb1e5d'))
 # define ERC20 contract

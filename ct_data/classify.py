@@ -7,7 +7,7 @@ from textblob.classifiers import NaiveBayesClassifier
 from colorama import init, Fore, Style
 from tabulate import tabulate
 
-import db_utility
+import ct_data.db_utility as db_utility
 
 
 class BankClassify:

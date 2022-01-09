@@ -1,6 +1,6 @@
 from docopt import docopt
-import db_utility
-import data
+import ct_data.db_utility as db_utility
+import ct_data.data as data
 import docopt_utility
 import copy
 

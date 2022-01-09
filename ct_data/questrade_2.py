@@ -1,6 +1,6 @@
 from qtrade import Questrade
 import pathlib
-import db_utility
+import ct_data.db_utility as db_utility
 
 fipy_fp = pathlib.Path(__file__).absolute().parent.parent
 src_path = fipy_fp.joinpath('src')
