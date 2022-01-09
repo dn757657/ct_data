@@ -32,10 +32,12 @@ class DB:
             self.filename = "ct_data.db"
         elif db_type == 'display':
             self.filename = "ct_display.db"
+
         self.filepath = fipy_fp.joinpath("db")
+        self.conn = sqlite3.connect(self.filepath.joinpath(self.filename))
+        self.update_tables(db_type=db_type)
 
         # must enforce foreign keys when connection is formed
-        self.conn = sqlite3.connect(self.filepath.joinpath(self.filename))
         self.conn.cursor().execute('PRAGMA foreign_keys = 1')
 
         # access and store schema
@@ -167,9 +169,6 @@ class DB:
             return False
 
 
-db = DB()
-
-
 class Query:
     """ Store query parameters and create queries
 
@@ -206,7 +205,7 @@ class Query:
 
         """
 
-    def __init__(self, table, s_cols=None,
+    def __init__(self, db, table, s_cols=None,
                  in_vals=None, in_cols=None,
                  up_vals=None, up_cols=None,
                  w_cols=None, w_conds=None, w_vals=None, w_joins=None,
@@ -217,6 +216,7 @@ class Query:
         # self.db = FinanceDB()
         # initialize properties
         self.table = table
+        self.db = db
         self.select_str = ""
         self.in_values_str = ""
         self.in_cols_str = ""
@@ -225,9 +225,6 @@ class Query:
         self.order_str = ""
         self.limit_str = ""
         self.wheres = []
-
-        if not db.exists(self.table):
-            db.create_table(self.table)
 
         self.w_joins = w_joins
         self.o_col = o_col
@@ -274,8 +271,6 @@ class Query:
 
     def build_str(self):
         """ build all query strings given Query properties """
-        if not db.exists(self.table):
-            db.create_table(self.table)
 
         # if * in s_cols, select_str is simply * as well
         if '*' not in self.s_cols:
@@ -287,7 +282,7 @@ class Query:
             self.in_vals = self.replace_null(self.in_vals)
             if not self.in_cols:
                 # default to all columns for insert if none passed and in_vals passed
-                self.in_cols = db.schema[self.table]
+                self.in_cols = self.db.schema[self.table]
             self.in_values_str = self._queryize_values()
             self.in_cols_str = self._queryize_columns(insert=True)
 
@@ -428,7 +423,7 @@ class Query:
     def links_entries(self, item_id, item_col, link_table):
         """ return linked items in link table given one ID and link table as list of ID's """
 
-        links_raw = db.conn.cursor().execute(
+        links_raw = self.db.conn.cursor().execute(
             "SELECT * FROM " + link_table + "WHERE " + item_col + " = " + item_id).fetchall()
 
         links = []

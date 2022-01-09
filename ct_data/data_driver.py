@@ -68,16 +68,16 @@ args = docopt(usage)
 
 docopt_utility.elim_apostrophes(args=args)
 
+db = db_utility.DB(db_type='finance')
 # initialize objects to pass to various function calls
-query = db_utility.Query(table=args['<table>'],
+query = db_utility.Query(db=db,
+                         table=args['<table>'],
                          s_cols=args['<s_cols>'],
                          in_vals=None, in_cols=None,
                          up_vals=args['<up_vals>'], up_cols=args['<up_cols>'],
                          w_cols=args['<w_cols>'], w_conds=docopt_utility.process_clause(args), w_vals=args['<w_vals>'], w_joins=args['<w_joins>'],
                          o_col=args['<o_col>'], o_cond=docopt_utility.o_cond(args),
                          limit=args['<limit>'])
-
-db = db_utility.DB()
 
 if args['delete']:
     db.conn.cursor().execute(query.build_delete())

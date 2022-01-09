@@ -37,9 +37,6 @@ ERC20_ABI = json.loads('[{"constant":true,"inputs":[],"name":"name","outputs":[{
 
 
 def update_holdings(db):
-    if not db.exists('crypto'):
-        db.create_table('crypto')
-
     # get wallet address from db
     wallet_addy = db.conn.cursor().execute("SELECT num FROM accounts WHERE institution = 'crypto'").fetchall()[0][0]
 

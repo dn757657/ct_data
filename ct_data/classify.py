@@ -25,10 +25,6 @@ class BankClassify:
 
             # select all data from transactions joined with categories descriptions that have been assigned a
             # category to be used for/as training data - only data with a category is selected
-            if 'categories'not in self.db.schema.keys():
-                self.db.create_table('categories')
-                self.db.conn.commit()
-
             data = self.db.conn.cursor().execute("SELECT date, desc, amount, cat_desc FROM transactions "
                                                  "JOIN categories ON transactions.cat_id=categories.cat_id").fetchall()
             # create data frame from cursor selection with expected column names

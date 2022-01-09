@@ -1,13 +1,15 @@
 """ this is just a file to house the displays db structure"""
 
 # displays & dashboards section
+# for integer columns variable input enter 0
+# for text column variable input enter var
 displays = """ CREATE TABLE IF NOT EXISTS displays (
                                 di_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 disp_start TEXT,
                                 disp_resolution REAL TEXT CHECK(disp_resolution IN ('year', 'month', 'week', 'day')),
                                 disp_end TEXT,
                                 disp_window_size INTEGER,
-                                disp_window_unit TEXT CHECK(disp_window_unit IN ('year', 'month', 'week', 'day')),
+                                disp_window_unit TEXT CHECK(disp_window_unit IN ('year', 'month', 'week', 'day', 'var')),
                                 disp_type TEXT NOT NULL,
                                 graph_type TEXT NOT NULL,
                                 proj_type TEXT
