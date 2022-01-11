@@ -3,16 +3,16 @@
 # displays & dashboards section
 # for integer columns variable input enter 0
 # for text column variable input enter var
-displays = """ CREATE TABLE IF NOT EXISTS displays (
-                                di_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                disp_start TEXT,
-                                disp_resolution REAL TEXT CHECK(disp_resolution IN ('year', 'month', 'week', 'day')),
-                                disp_end TEXT,
-                                disp_window_size INTEGER,
-                                disp_window_unit TEXT CHECK(disp_window_unit IN ('year', 'month', 'week', 'day', 'var')),
-                                disp_type TEXT NOT NULL,
+display_types = """ CREATE TABLE IF NOT EXISTS display_types (
+                                dt_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                x_min TEXT,
+                                x_resolution INTEGER
+                                x_max TEXT,
+                                x_window_size INTEGER,
+                                x_window_unit TEXT,
                                 graph_type TEXT NOT NULL,
                                 proj_type TEXT
+                                UNIQUE(x_min, x_resolution, x_max, x_window_size, x_window_unit, graph_type)
         
                             ); """
 
@@ -23,38 +23,36 @@ dashboards = """ CREATE TABLE IF NOT EXISTS dashboards (
         
                             ); """
 
-displays_dashboards = """ CREATE TABLE IF NOT EXISTS displays_dashboards (
-                                di_id INTEGER,
+displays_dashboards = """ CREATE TABLE IF NOT EXISTS cm_dashboards (
+                                dt_id INTEGER,
                                 dash_id INTEGER,
                                 UNIQUE(di_id, dash_id)
-                                FOREIGN KEY (di_id) REFERENCES displays (di_id) ON DELETE CASCADE ON UPDATE CASCADE,
+                                FOREIGN KEY (dt_id) REFERENCES display_types (dt_id) ON DELETE CASCADE ON UPDATE CASCADE,
                                 FOREIGN KEY (dash_id) REFERENCES dashboards (dash_id) ON DELETE CASCADE ON UPDATE CASCADE
         
                             ); """
 
 # display types and link tables
-
-dt_default = """ CREATE TABLE IF NOT EXISTS dt_default (
-                                dt_default_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                dt_default_desc TEXT
-                
-                            ); """
-dt_budget = """ CREATE TABLE IF NOT EXISTS dt_budget (
-                                dt_budget_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                dt_b_target REAL NOT NULL,
-                                dt_b_desc TEXT,
-                                dt_b_type TEXT NOT NULL CHECK(dt_b_type IN ('year', 'month', 'week', 'day'))
-        
-                            ); """
-
-dt_categories = """ CREATE TABLE IF NOT EXISTS dt_categories (
-                                dt_default_id INTEGER,
-                                dt_budget_id INTEGER,
-                                dt_cat_id INTEGER,
-                                FOREIGN KEY (dt_default_id) REFERENCES dt_default (dt_default_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                                FOREIGN KEY (dt_budget_id) REFERENCES dt_budget (dt_budget_id) ON DELETE CASCADE ON UPDATE CASCADE,
-                                FOREIGN KEY (cat_id) REFERENCES categories (cat_id) ON DELETE CASCADE ON UPDATE CASCADE
+cm_records = """ CREATE TABLE IF NOT EXISTS cm_records (
+                                cm_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                cm_target REAL NOT NULL,
+                                cm_resolution,
+                                cm_type TEXT NOT NULL CHECK(cm_type IN ('budget','goal','account')),
+                                cm_desc TEXT,
+                                g_profile INTEGER,
+                                acc_date DATETIME
                                 
                             ); """
 
-DISPLAY_TABLES = [displays, dashboards, displays_dashboards, dt_default, dt_budget, dt_categories]
+
+cm_sources = """ CREATE TABLE IF NOT EXISTS cm_sources (
+                                cm_id INTEGER NOT NULL,
+                                source_table TEXT NOT NULL CHECK (source_table in (SELECT name FROM sqlite_master WHERE type='table)),
+                                source_col TEXT NOT NULL,
+                                source_cond TEXT CHEK(source_cond IN ('=', 'LIKE', '<=', '>=')),
+                                source_id INTEGER,
+                                FOREIGN KEY (cm_id) REFERENCES cm_records (cm_id) ON DELETE CASCADE ON UPDATE CASCADE
+                                
+                            ); """
+
+DISPLAY_TABLES = [display_types, dashboards, displays_dashboards, cm_records, cm_sources]

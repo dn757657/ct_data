@@ -31,11 +31,11 @@ class DB:
         if db_type == 'finance':
             self.filename = "ct_data.db"
         elif db_type == 'display':
-            self.filename = "ct_display.db"
+            self.filename = "ct_data.db"
 
         self.filepath = fipy_fp.joinpath("db")
         self.conn = sqlite3.connect(self.filepath.joinpath(self.filename))
-        self.update_tables(db_type=db_type)
+        self.update_tables()
 
         # must enforce foreign keys when connection is formed
         self.conn.cursor().execute('PRAGMA foreign_keys = 1')
@@ -151,13 +151,13 @@ class DB:
         name:   name of table to create(transactions, accounts, categories)
 
         """
-        if db_type == 'finance':
-            for table_command in data_db.FINANCE_TABLES:
-                self.conn.cursor().execute(table_command)
 
-        if db_type == 'display':
-            for table_command in display_db.DISPLAY_TABLES:
-                self.conn.cursor().execute(table_command)
+        for table_command in data_db.FINANCE_TABLES:
+            # print(table_command)
+            self.conn.cursor().execute(table_command)
+        for table_command in display_db.DISPLAY_TABLES:
+            # print(table_command)
+            self.conn.cursor().execute(table_command)
 
         return
 
