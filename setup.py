@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='ct_data',
-      version='0.0.4',
+      version='0.0.5',
       packages=['ct_data'],
       # Start with a small number and increase it with every change you make
       license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
@@ -9,7 +9,7 @@ setup(name='ct_data',
       author = 'Dan',                   # Type in your name
       author_email = 'daniel.js.campbell@gmail.com',      # Type in your E-Mail
       url = 'https://github.com/dn757657/ct_data2.git',   # Provide either the link to your github or to your website
-      download_url = 'https://github.com/dn757657/ct_data/archive/refs/tags/0.0.4.tar.gz',    # I explain this later on
+      download_url = 'https://github.com/dn757657/ct_data/archive/refs/tags/0.0.5.tar.gz',    # I explain this later on
       keywords = ['Management', 'finance', 'automation'],   # Keywords that define your package best
       install_requires=[            # I get to this in a second
             'pandas',

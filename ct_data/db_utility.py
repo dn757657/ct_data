@@ -100,7 +100,9 @@ class DB:
             # unique and would delete nothing
             # copy.deepcopy(db.schema[query.table])
             if not filter_columns:
-                columns_str = self._queryize_columns(copy.deepcopy(self.schema[table]).pop(0))
+                new_columns = copy.deepcopy(self.schema[table])
+                new_columns.pop(0)
+                columns_str = self._queryize_columns(new_columns)
                 filter_columns = copy.deepcopy(self.schema[table]).pop(0)
             else:
                 columns_str = self._queryize_columns(filter_columns)
@@ -145,7 +147,7 @@ class DB:
         else:
             print("Method must be either 'inside' or 'outside")
 
-    def update_tables(self, db_type):
+    def update_tables(self,):
         """ create default tables used in finance app using default schema set internally
         Args:
         name:   name of table to create(transactions, accounts, categories)

@@ -96,7 +96,7 @@ def create_holding(query):
     return
 
 
-def create_item(db, query, item_type, drop_cond=None, drop_method=None, comp_columns=None):
+def create_item(db, query, item_type, drop_cond=None, drop_method=None, comp_columns=None, drop_id_col=None):
     """ pleas write docstring """
 
     if item_type == 'account':
@@ -108,7 +108,8 @@ def create_item(db, query, item_type, drop_cond=None, drop_method=None, comp_col
 
     if drop_cond and drop_method:
         # delete duplicates and keep minimum id value (original entry)
-        db.drop_duplicates(table=query.table, condition=drop_cond, method=drop_method, filter_columns=comp_columns)
+        db.drop_duplicates(table=query.table, condition=drop_cond, method=drop_method, filter_columns=comp_columns,
+                           id_col=drop_id_col)
         db.conn.commit()
 
     # show new table entry
