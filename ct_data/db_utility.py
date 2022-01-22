@@ -3,8 +3,13 @@ import pathlib
 import pandas as pd
 import copy
 import os
-import ct_data.data_db as data_db
-import ct_data.display_db as display_db
+# import data_db
+from data_db import FINANCE_TABLES
+# import display_db
+from display_db import DISPLAY_TABLES
+import datetime
+
+DATE_FORMAT = '%Y-%m-%d'
 
 fipy_fp = pathlib.Path(__file__).absolute().parent
 os.makedirs(fipy_fp.joinpath('db'), exist_ok=True)
@@ -25,14 +30,11 @@ class DB:
 
     """
 
-    def __init__(self, db_type):
+    def __init__(self):
         """ create database object and populate schema data"""
         # connect to db when initialized and establish cursor for later use
-        if db_type == 'finance':
-            self.filename = "ct_data.db"
-        elif db_type == 'display':
-            self.filename = "ct_data.db"
 
+        self.filename = "ct_data.db"
         self.filepath = fipy_fp.joinpath("db")
         self.conn = sqlite3.connect(self.filepath.joinpath(self.filename))
         self.update_tables()
@@ -154,10 +156,10 @@ class DB:
 
         """
 
-        for table_command in data_db.FINANCE_TABLES:
+        for table_command in FINANCE_TABLES:
             # print(table_command)
             self.conn.cursor().execute(table_command)
-        for table_command in display_db.DISPLAY_TABLES:
+        for table_command in DISPLAY_TABLES:
             # print(table_command)
             self.conn.cursor().execute(table_command)
 
@@ -258,12 +260,15 @@ class Query:
             for i in range(0, len(w_cols)):
                 where = {}
                 # sql will only recognize dates enclosed in apostrophes
-                if 'date' in w_cols[i]:
-                    w_vals[i] = "'" + w_vals[i] + "'"
 
                 # process all else normally
                 where['col'] = w_cols[i]
                 where['cond'] = w_conds[i]
+                # convert datetime objects ot srtings
+                if isinstance(w_vals[i], datetime.datetime):
+                    w_vals[i] = w_vals[i].strftime(DATE_FORMAT)
+                if 'date' in w_cols[i]:
+                    w_vals[i] = "'" + w_vals[i] + "'"
                 where['val'] = w_vals[i]
                 self.wheres.append(where)
 
@@ -358,9 +363,9 @@ class Query:
         where_str = "WHERE "
 
         # need to wrap all vals in aprotrophe or might nto work if not already for fucks sake
-        for val in self.wheres:
-            if val['val'][0] != "'" and val['val'][-1] != "'":
-                val['val'] = "'" + val['val'] + "'"
+        # for val in self.wheres:
+        #     if val['val'][0] != "'" and val['val'][-1] != "'":
+        #         val['val'] = "'" + val['val'] + "'"
 
         if len(self.wheres) > 1:
             # w_joins counter
@@ -407,7 +412,7 @@ class Query:
 
         return updates_str
 
-    def _query_dict(self, query, table):
+    def _query_dict(self, db, query, table):
         """ return list of dictionaries, table column names as keys and entries as items """
 
         entries = []
@@ -439,7 +444,7 @@ class Query:
         # SELECT function(s_cols) FROM table WHERE ORDER LIMIT
 
         # data validation for functions and select query argument requirements
-        available_functions = ['AVG', 'SUM']
+        available_functions = ['AVG', 'SUM', 'MAX']
         if function:
             if function not in available_functions:
                 print('Function not included, available functions must be one of ' + str(available_functions)[1:-1])
@@ -472,7 +477,7 @@ class Query:
         if build_op == 'string':
             return query
         elif build_op == 'dict':
-            data = self._query_dict(query=query, table=self.table)
+            data = self._query_dict(db=self.db, query=query, table=self.table)
             return data
 
     def build_insert(self, method='FAIL',):

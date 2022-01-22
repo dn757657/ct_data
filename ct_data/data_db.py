@@ -22,7 +22,7 @@ categories = """ CREATE TABLE IF NOT EXISTS categories (
 
 transactions = """ CREATE TABLE IF NOT EXISTS transactions (
                             trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            date TEXT NOT NULL,
+                            date DATETIME NOT NULL,
                             desc TEXT NOT NULL,
                             amount REAL NOT NULL,
                             total_id REAL NOT NULL,
@@ -54,7 +54,7 @@ tags_links = """ CREATE TABLE IF NOT EXISTS tags_links (
 # create slits to store originals of split transactions so they arent replicated in updates
 splits = """ CREATE TABLE IF NOT EXISTS splits (
                             trans_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            date TEXT NOT NULL,
+                            date DATETIME NOT NULL,
                             desc TEXT NOT NULL,
                             amount REAL NOT NULL,
                             total_id REAL NOT NULL

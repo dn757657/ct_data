@@ -7,11 +7,15 @@ display_types = """ CREATE TABLE IF NOT EXISTS display_types (
                                 dt_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 x_min TEXT,
                                 x_resolution INTEGER,
+                                x_resolution_unit TEXT,
                                 x_max TEXT,
                                 x_window_size INTEGER,
                                 x_window_unit TEXT,
+                                x_source_col TEXT NOT NULL,
                                 graph_type TEXT NOT NULL,
-                                proj_type TEXT
+                                proj_type TEXT,
+                                proj_resolution INTEGER NOT NULL,
+                                proj_resolution_unit TEXT
         
                             ); """
 
@@ -38,7 +42,8 @@ cm_records = """ CREATE TABLE IF NOT EXISTS cm_records (
 cm_sources = """ CREATE TABLE IF NOT EXISTS cm_sources (
                                 cm_id INTEGER NOT NULL,
                                 source_table TEXT NOT NULL,
-                                source_col TEXT NOT NULL,
+                                source_w_col TEXT NOT NULL,
+                                source_y_col TEXT NOT NULL,
                                 source_cond TEXT CHECK(source_cond IN ('=', 'LIKE', '<=', '>=')),
                                 source_id INTEGER,
                                 created DATETIME DEFAULT CURRENT_TIMESTAMP,

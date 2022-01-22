@@ -1,9 +1,14 @@
 import pandas_datareader as datar
 
 
-def get_price(symbol, source='yahoo'):
-    """ give a symobl -> get a price """
+class priceData():
+    def __init__(self, symbol):
+        self.symbol = symbol
+        self.price = self.get_price()
 
-    price = datar.DataReader(symbol, source)
-    price = price["Close"][price.last_valid_index()]
-    return price
+    def get_price(self, source='yahoo'):
+        """ give a symobl -> get a price """
+
+        price = datar.DataReader(self.symbol, source)
+        price = price["Close"][price.last_valid_index()]
+        return price

@@ -14,13 +14,13 @@ def elim_apostrophes(args):
 def process_clause(args):
     w_params = []
     for cond in args['<w_conds>']:
-        if cond == 'eq':
+        if cond.casefold() == 'eq'.casefold():
             w_params.append('=')
-        if cond == 'gt':
+        if cond.casefold() == 'gt'.casefold():
             w_params.append('>=')
-        if cond == 'lt':
+        if cond.casefold() == 'lt'.casefold():
             w_params.append('<=')
-        if cond == 'like':
+        if cond.casefold() == 'like'.casefold():
             w_params.append('LIKE')
 
     return w_params

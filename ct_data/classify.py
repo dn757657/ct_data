@@ -1,20 +1,18 @@
 import re
 import dateutil
-from datetime import datetime
-
 import pandas as pd
+
+from datetime import datetime
 from textblob.classifiers import NaiveBayesClassifier
 from colorama import init, Fore, Style
 from tabulate import tabulate
 
-import ct_data.db_utility as db_utility
-
 
 class BankClassify:
 
-    def __init__(self, data="sql"):
+    def __init__(self, db, data="sql"):
         """Load in the previous data (by default from `data`) and initialise the classifier"""
-        self.db = db_utility.DB()
+        self.db = db
 
         # allows dynamic training data to be used (i.e many accounts in a loop)
         self.unprocessed_data = None
@@ -112,7 +110,9 @@ class BankClassify:
             categories_df.index.names = [self.db.schema['categories'][0],]
             # TODO cant replace table when there are foreign key constraints
             # TODO compare old and new categories OUTSIDE of database, then reindex and append without index to allow for autoincrement
-            self.db.drop_duplicates(table='categories', method='outside', new_data=categories_df)
+            # self.db.drop_duplicates(table='categories', method='outside', new_data=categories_df)
+            self.db.drop_duplicates(table='categories', condition='MIN', method='inside',
+                                    filter_columns=['cat_desc'])
 
             # categories_df.to_sql(name='categories', con=self.db.conn, index=False, if_exists='append')
 

@@ -1,8 +1,11 @@
 from docopt import docopt
-import ct_data.db_utility as db_utility
-import ct_data.data as data
-import docopt_utility
 import copy
+
+# internal
+from docopt_utility import elim_apostrophes, o_cond, process_clause
+from classify import BankClassify
+from db_utility import DB, Query
+from data import dbInput, dbView, dbUpdate
 
 # sys.tracebacklimit = 0
 # TODO revise usage to make actual sense
@@ -64,39 +67,42 @@ Options:
 """
 
 args = docopt(usage)
-# print(args)
 
-docopt_utility.elim_apostrophes(args=args)
+elim_apostrophes(args=args)
+print(args)
 
-db = db_utility.DB(db_type='finance')
+db = DB()
 # initialize objects to pass to various function calls
-query = db_utility.Query(db=db,
-                         table=args['<table>'],
-                         s_cols=args['<s_cols>'],
-                         in_vals=None, in_cols=None,
-                         up_vals=args['<up_vals>'], up_cols=args['<up_cols>'],
-                         w_cols=args['<w_cols>'], w_conds=docopt_utility.process_clause(args), w_vals=args['<w_vals>'], w_joins=args['<w_joins>'],
-                         o_col=args['<o_col>'], o_cond=docopt_utility.o_cond(args),
-                         limit=args['<limit>'])
+query = Query(db=db, table=args['<table>'],
+              s_cols=args['<s_cols>'],
+              in_vals=None, in_cols=None,
+              up_vals=args['<up_vals>'], up_cols=args['<up_cols>'],
+              w_cols=args['<w_cols>'], w_conds=process_clause(args), w_vals=args['<w_vals>'], w_joins=args['<w_joins>'],
+              o_col=args['<o_col>'], o_cond=o_cond(args),
+              limit=args['<limit>'])
 
 if args['delete']:
     db.conn.cursor().execute(query.build_delete())
     db.conn.commit()
 
 if args['process']:
-    data.categorize()
+    BankClassify(db=db).ask_with_guess()
 
 if args['edit']:
     # add tags to in_vals and rebuild strings
     if args['<tag_desc>']:
         for tag in args['<tag_desc>']:
-            data.tag_entry(db=db, tagged_query=query, tag_param=tag)
+            update = dbUpdate(db=db)
+            update.tag_entry(tagged_query=query, tag_param=tag)
 
-    data.edit(db=db, query=query)
+    update = dbUpdate(db=db)
+    update.edit(query=query)
+    # data.edit(db=db, query=query)
 
 if args['split']:
     query.table = 'transactions'
-    data.split_transaction(db=db, query=query, percentage=args['<percent>'], amount=args['<new_value>'])
+    update = dbUpdate(db=db)
+    update.split_transaction(query=query, percentage=args['<percent>'], amount=args['<new_value>'])
 
 if args['create']:
     if args['--a']:
@@ -125,8 +131,8 @@ if args['create']:
         comp_columns.pop(0)
         comp_columns.pop(-1)
 
-        data.create_item(db=db, query=query, item_type='account', drop_cond='MIN', drop_method='inside',
-                         comp_columns=comp_columns)
+        create = dbInput(query=query, db=db, drop_cond='MIN', drop_method='inside', comp_columns=comp_columns)
+        create.create_item(item_type='account')
 
     if args['--t']:
         for tag in args['<tag_desc>']:
@@ -135,7 +141,8 @@ if args['create']:
             query.in_vals = in_vals
             query.build_str()
 
-            data.create_item(db=db, query=query, item_type='tag')
+            create = dbInput(query=query, db=db)
+            create.create_item(item_type='tag')
 
     if args['--c']:
         for category in args['<cat_desc>']:
@@ -144,7 +151,8 @@ if args['create']:
             query.in_vals = in_vals
             query.build_str()
 
-            data.create_item(db=db, query=query, item_type='category')
+            create = dbInput(query=query, db=db)
+            create.create_item(item_type='category')
 
     if args['--crh']:
         query.table = 'crypto_holdings'
@@ -152,15 +160,21 @@ if args['create']:
         query.in_vals = in_vals
         query.build_str()
 
-        data.create_item(db=db, query=query, item_type='crypto_holding')
+        create = dbInput(query=query, db=db)
+        create.create_item(item_type='crypto_holding')
 
 if args['tag']:
     for tag in args['<tag_desc>']:
-        data.tag_entry(db=db, tagged_query=query, tag_param=tag)
+        # data.tag_entry(db=db, tagged_query=query, tag_param=tag)
+
+        update = dbUpdate(db=db)
+        update.tag_entry(tagged_query=query, tag_param=tag)
 
 if args['view']:
     if args['<table>'] in db.schema.keys():
-        data.view(db=db, query=query)
+        view = dbView(db=db, query=query)
+        print(view.tabulated)
+        # data.view(db=db, query=query)
     else:
         print("Table does not exist")
 
@@ -170,11 +184,12 @@ if args['--help']:
 if args['update']:
     if args['--a']:
         if args['<account>']:
-            data.update_account(db=db, account=args['<account>'])
+            update = dbUpdate(db=db)
+            update.update_account(account=args['<account>'])
 
         elif args['--all']:
             accounts = db.conn.cursor().execute("SELECT num FROM accounts").fetchall()
 
             for account in accounts:
-
-                data.update_account(db=db, account=account[0])
+                update = dbUpdate(db=db)
+                update.update_account(account=account[0])
